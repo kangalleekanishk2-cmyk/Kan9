@@ -14,6 +14,7 @@ input{flex:1;padding:8px}
 .vid{position:relative;padding-bottom:56.25%;height:0}
 .vid iframe{position:absolute;width:100%;height:100%}
 .btn{display:inline-block;padding:8px;margin:5px;background:#00b894;color:#fff;text-decoration:none;border-radius:4px}
+.credit{font-size:12px;color:#aaa;margin-top:10px;padding:5px}
 </style>
 </head>
 <body>
@@ -23,13 +24,22 @@ input{flex:1;padding:8px}
     <button onclick="search()">Search</button>
     <button onclick="showFavorites()">⭐ Favorites</button>
 </header>
-<div id=d><button onclick="d.style.display='none'">Back</button><h2 id=t></h2><div class=vid><iframe id=tr></iframe></div><p id=s></p><div id=l></div></div>
+<div id=d>
+    <button onclick="d.style.display='none'">Back</button>
+    <h2 id=t></h2>
+    <div class=vid><iframe id=tr></iframe></div>
+    <div class=credit>Watch on official platforms:</div>
+    <div id=l></div>
+</div>
 <div id=grid></div>
 
 <script>
 let favs = JSON.parse(localStorage.getItem('favs') || '[]');
 
-async function load(u){let j=await(await fetch(u)).json();render(j.data);}
+async function load(u){
+    let j=await(await fetch(u)).json();
+    render(j.data);
+}
 
 function render(data){
     grid.innerHTML='';
@@ -56,8 +66,13 @@ function showFavorites(){render(favs);}
 function search(){load('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(q.value))}
 
 function show(a,t){
-    d.style.display='block';t.innerText=t;s.innerText=a.synopsis||'';tr.src=a.trailer?.embed_url||'';
-    l.innerHTML=['YouTube','Crunchyroll','Netflix','Tubi'].map(p=>`<a class=btn target=_blank href="https://www.${p.toLowerCase()}.com/search?q=${encodeURIComponent(t)}">${p}</a>`).join('');
+    d.style.display='block';t.innerText=t;
+    document.getElementById('s').innerText=a.synopsis||'';
+    tr.src=a.trailer?.embed_url||'';
+    
+    // Updated platforms: Removed Tubi, added Google Search for better availability
+    let platforms = ['YouTube','Crunchyroll','Netflix','Google Search'];
+    l.innerHTML=platforms.map(p=>`<a class=btn target=_blank href="${p==='Google Search' ? 'https://www.google.com/search?q='+encodeURIComponent(t+' stream') : 'https://www.'+p.toLowerCase()+'.com/search?q='+encodeURIComponent(t)}">${p}</a>`).join('');
     scrollTo(0,0)
 }
 
