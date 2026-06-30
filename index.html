@@ -2,54 +2,64 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kan9</title>
 <style>
 body{margin:0;background:#111;color:#fff;font:14px sans-serif}
-header{display:flex;padding:10px;background:#1b1b1b;gap:10px;align-items:center;flex-wrap:wrap}
-input{flex:1;padding:8px}
+header{display:flex;padding:10px;background:#1b1b1b;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+input{flex:1;padding:8px;border-radius:4px;border:none}
+button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;border-radius:4px}
 #grid{display:grid;grid-template:auto/repeat(auto-fill,minmax(160px,1fr));gap:15px;padding:15px}
 .card{background:#222;border-radius:8px;cursor:pointer;position:relative}
 .card img{width:100%;height:220px;object-fit:cover;border-radius:8px 8px 0 0}
 .fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);border:0;color:gold;padding:5px;cursor:pointer;border-radius:50%}
 #d{display:none;padding:20px;max-width:800px;margin:auto}
-.vid{position:relative;padding-bottom:56.25%;height:0}
-.vid iframe{position:absolute;width:100%;height:100%}
-.btn{display:inline-block;padding:8px;margin:5px;background:#00b894;color:#fff;text-decoration:none;border-radius:4px}
+.vid{position:relative;padding-bottom:56.25%;height:0;background:#000;border-radius:8px;overflow:hidden;margin:15px 0}
+.vid iframe{position:absolute;width:100%;height:100%;border:0}
+.btn{display:inline-block;padding:8px;margin:5px;background:#00b894;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold}
 .credit{font-size:12px;color:#aaa;margin-top:10px;padding:5px}
 </style>
 </head>
 <body>
 <header>
-    <h3 onclick="location.reload()" style="cursor:pointer">Kan9</h3>
+    <h3 onclick="location.reload()" style="cursor:pointer;margin:0 10px 0 0">Kan9</h3>
     <input id=q placeholder="Search...">
     <button onclick="search()">Search</button>
     <button onclick="loadSeasonal()">Seasonal</button>
     <button onclick="showFavorites()">⭐ Favorites</button>
 </header>
+
 <div id=d>
     <button onclick="d.style.display='none'">Back</button>
-    <h2 id=t></h2>
-    <div class=vid><iframe id=tr></iframe></div>
+    <h2 id=t_txt></h2>
+    <div class=vid><iframe id=tr allowfullscreen></iframe></div>
     <p id=s></p>
     <div class=credit>Watch on official platforms:</div>
     <div id=l></div>
 </div>
+
 <div id=grid></div>
 
 <script>
 let favs = JSON.parse(localStorage.getItem('favs') || '[]');
 
 async function load(u){
-    let res = await fetch(u);
-    let j = await res.json();
-    render(j.data);
+    try {
+        let res = await fetch(u);
+        let j = await res.json();
+        render(j.data);
+    } catch(e) { console.error("Load error:", e); }
 }
 
 function render(data){
     grid.innerHTML='';
+    if(!data || data.length === 0) {
+        grid.innerHTML = '<div style="padding:20px">No anime found.</div>';
+        return;
+    }
     data.forEach(a=>{
         let t=a.title_english||a.title, c=document.createElement('div');
         c.className='card';
-        c.innerHTML=`<img src="${a.images.jpg.image_url}"><div style="padding:10px">${t}</div><button class="fav-btn" onclick="toggleFav(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})">⭐</button>`;
+        c.innerHTML=`<img src="${a.images.jpg.image_url}"><div style="padding:10px"><b>${t}</b></div><button class="fav-btn" onclick="toggleFav(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})">⭐</button>`;
         c.onclick=(e)=>{if(e.target.tagName!=='BUTTON')show(a,t)};
         grid.appendChild(c);
     });
@@ -64,19 +74,31 @@ function toggleFav(e, a){
     alert('Updated Favorites!');
 }
 
-function showFavorites(){render(favs);}
-function search(){load('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(q.value))}
-function loadSeasonal(){load('https://api.jikan.moe/v4/seasons/2026/summer');}
+function showFavorites(){ render(favs); }
+function search(){ load('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(q.value)); }
+function loadSeasonal(){ load('https://api.jikan.moe/v4/seasons/2026/summer'); }
 
 function show(a,t){
     d.style.display='block';
-    t.innerText=t;
-    document.getElementById('s').innerText=a.synopsis||'No synopsis.';
+    t_txt.innerText=t;
+    s.innerText=a.synopsis||'No synopsis available.';
     tr.src=a.trailer?.embed_url||'';
     
-    // Now searching for "dub stream" on Google
-    let platforms = ['YouTube','Crunchyroll','Netflix','Google Search'];
-    l.innerHTML=platforms.map(p=>`<a class=btn target=_blank href="${p==='Google Search' ? 'https://www.google.com/search?q='+encodeURIComponent(t+' dub stream') : 'https://www.'+p.toLowerCase()+'.com/search?q='+encodeURIComponent(t)}">${p}</a>`).join('');
+    let platforms = [
+        ['YouTube', 'https://www.youtube.com/results?search_query='],
+        ['Crunchyroll', 'https://www.crunchyroll.com/search?q='],
+        ['Netflix', 'https://www.netflix.com/search?q='],
+        ['Google (Sub)', 'https://www.google.com/search?q='],
+        ['Google (Dub)', 'https://www.google.com/search?q=']
+    ];
+    
+    l.innerHTML = platforms.map(p => {
+        let query = t;
+        if (p[0] === 'Google (Sub)') query = t + ' sub stream';
+        if (p[0] === 'Google (Dub)') query = t + ' dub stream';
+        return `<a class=btn target=_blank href="${p[1] + encodeURIComponent(query)}">${p[0]}</a>`;
+    }).join('');
+    
     scrollTo(0,0);
 }
 
