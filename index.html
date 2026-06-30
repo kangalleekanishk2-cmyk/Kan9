@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kan9 - Discover</title>
+    <title>Kan9 - Official Anime Hub</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background-color: #111217; color: #fff; padding: 20px; }
@@ -12,17 +12,16 @@
         .search-box { display: flex; gap: 10px; }
         input { padding: 10px; border-radius: 5px; border: 1px solid #232531; background: #1c1d24; color: white; width: 250px; }
         button { padding: 10px 20px; background: #ff4757; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .player-container { display: none; margin-bottom: 40px; background: #1c1d24; padding: 20px; border-radius: 8px; border: 1px solid #232531; }
+        .info-container { display: none; margin-bottom: 40px; background: #1c1d24; padding: 20px; border-radius: 8px; border: 1px solid #232531; }
         .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin-bottom: 15px; }
         .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .player-controls { display: flex; gap: 10px; margin-bottom: 15px; }
-        .control-btn { background: #232531; color: white; border: none; border-radius: 5px; padding: 8px 15px; cursor: pointer; }
-        .control-btn.active { background: #ff4757; }
         .anime-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
         .anime-card { background: #1c1d24; border-radius: 8px; overflow: hidden; cursor: pointer; border: 1px solid #232531; }
         .anime-card img { width: 100%; height: 280px; object-fit: cover; }
         .anime-info { padding: 12px; }
         .anime-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .watch-options { margin-top: 15px; display: flex; gap: 10px; }
+        .watch-btn { padding: 10px 15px; background: #00d2d3; color: white; text-decoration: none; border-radius: 5px; font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -33,21 +32,18 @@
             <button onclick="searchAnime()">Search</button>
         </div>
     </header>
-    <div class="player-container" id="player-container">
-        <h2 id="player-title">Now Watching</h2>
-        <div class="player-controls">
-            <button id="btn-stream" class="control-btn" onclick="switchSource('stream')">Watch Episode</button>
-            <button id="btn-trailer" class="control-btn" onclick="switchSource('trailer')">Watch Trailer</button>
+    <div class="info-container" id="info-container">
+        <h2 id="anime-title"></h2>
+        <div class="video-wrapper" id="trailer-wrapper">
+            <iframe id="trailer-player" src="" allowfullscreen></iframe>
         </div>
-        <div class="video-wrapper">
-            <iframe id="video-player" src="" allowfullscreen></iframe>
-        </div>
-        <p id="player-description"></p>
+        <p id="anime-description" style="margin-top: 15px;"></p>
+        <div class="watch-options" id="watch-links">
+            </div>
     </div>
     <h2>Trending</h2>
     <div class="anime-grid" id="anime-display"></div>
     <script>
-        let currentMalId = "", currentTrailerUrl = "";
         window.onload = () => fetchAnime('https://api.jikan.moe/v4/top/anime');
         function searchAnime() { fetchAnime(`https://api.jikan.moe/v4/anime?q=${document.getElementById('search-input').value}&limit=20`); }
         async function fetchAnime(url) { const res = await fetch(url); const data = await res.json(); displayAnime(data.data); }
@@ -55,28 +51,23 @@
             const cont = document.getElementById('anime-display'); cont.innerHTML = '';
             list.forEach(a => {
                 const card = document.createElement('div'); card.className = 'anime-card';
-                card.onclick = () => playAnime(a.title, a.mal_id, a.trailer?.embed_url, a.synopsis);
+                card.onclick = () => showDetails(a);
                 card.innerHTML = `<img src="${a.images.jpg.image_url}"><div class="anime-info"><div class="anime-title">${a.title}</div></div>`;
                 cont.appendChild(card);
             });
         }
-        function playAnime(t, id, url, desc) {
-            currentMalId = id; currentTrailerUrl = url;
-            document.getElementById('player-title').innerText = "Watching: " + t;
-            document.getElementById('player-description').innerText = desc || "";
-            document.getElementById('player-container').style.display = 'block';
-            switchSource('stream');
+        function showDetails(a) {
+            document.getElementById('anime-title').innerText = a.title;
+            document.getElementById('anime-description').innerText = a.synopsis || "No description available.";
+            const links = document.getElementById('watch-links');
+            links.innerHTML = `
+                <a href="https://www.crunchyroll.com/search?q=${encodeURIComponent(a.title)}" target="_blank" class="watch-btn">Crunchyroll</a>
+                <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(a.title + ' official episode')}" target="_blank" class="watch-btn" style="background:#ff4757;">YouTube</a>
+            `;
+            const trailer = document.getElementById('trailer-player');
+            trailer.src = a.trailer?.embed_url || "";
+            document.getElementById('info-container').style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        function switchSource(type) {
-            const player = document.getElementById('video-player');
-            if (type === 'stream') {
-                window.open(`https://vidsrc.pro/embed/anime/${currentMalId}/1/1`, '_blank');
-                player.src = "";
-            } else if (type === 'trailer') {
-                player.src = currentTrailerUrl || "";
-                if (!currentTrailerUrl) alert("No trailer found!");
-            }
         }
     </script>
 </body>
