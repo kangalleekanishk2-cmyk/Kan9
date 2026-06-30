@@ -28,6 +28,7 @@ input{flex:1;padding:8px}
     <button onclick="d.style.display='none'">Back</button>
     <h2 id=t></h2>
     <div class=vid><iframe id=tr></iframe></div>
+    <p id=s></p> <!-- This was the missing element causing the crash -->
     <div class=credit>Watch on official platforms:</div>
     <div id=l></div>
 </div>
@@ -37,8 +38,11 @@ input{flex:1;padding:8px}
 let favs = JSON.parse(localStorage.getItem('favs') || '[]');
 
 async function load(u){
-    let j=await(await fetch(u)).json();
-    render(j.data);
+    try {
+        let res = await fetch(u);
+        let j = await res.json();
+        render(j.data);
+    } catch(e) { console.error("Load error:", e); }
 }
 
 function render(data){
@@ -66,14 +70,14 @@ function showFavorites(){render(favs);}
 function search(){load('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(q.value))}
 
 function show(a,t){
-    d.style.display='block';t.innerText=t;
-    document.getElementById('s').innerText=a.synopsis||'';
+    d.style.display='block';
+    t.innerText=t;
+    document.getElementById('s').innerText=a.synopsis||'No synopsis.';
     tr.src=a.trailer?.embed_url||'';
     
-    // Updated platforms: Removed Tubi, added Google Search for better availability
     let platforms = ['YouTube','Crunchyroll','Netflix','Google Search'];
     l.innerHTML=platforms.map(p=>`<a class=btn target=_blank href="${p==='Google Search' ? 'https://www.google.com/search?q='+encodeURIComponent(t+' stream') : 'https://www.'+p.toLowerCase()+'.com/search?q='+encodeURIComponent(t)}">${p}</a>`).join('');
-    scrollTo(0,0)
+    scrollTo(0,0);
 }
 
 load('https://api.jikan.moe/v4/top/anime');
