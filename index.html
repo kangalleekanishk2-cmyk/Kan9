@@ -1,27 +1,101 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kan9</title>
-<style>
-body{margin:0;background:#111;color:#fff;font-family:Arial}header{display:flex;gap:10px;padding:16px;background:#1b1b1b;position:sticky;top:0}input{flex:1;padding:10px}button{padding:10px;background:#ff4757;color:#fff;border:0}#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;padding:16px}.card{background:#222;border-radius:8px;overflow:hidden;cursor:pointer}.card img{width:100%;height:260px;object-fit:cover}.info{padding:10px}#details{display:none;padding:16px}iframe{width:100%;aspect-ratio:16/9;border:0}a.btn{display:inline-block;margin:6px;padding:10px 14px;background:#00b894;color:#fff;text-decoration:none;border-radius:6px}
-</style></head>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Kan9 - Anime Browser</title>
+    <style>
+        body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; }
+        header { display: flex; gap: 10px; padding: 16px; background: #1b1b1b; position: sticky; top: 0; z-index: 10; }
+        input { flex: 1; padding: 10px; border-radius: 4px; border: none; }
+        button { padding: 10px; background: #ff4757; color: #fff; border: 0; cursor: pointer; border-radius: 4px; }
+        
+        #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; padding: 16px; }
+        .card { background: #222; border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; }
+        .card:hover { transform: scale(1.03); }
+        .card img { width: 100%; height: 260px; object-fit: cover; }
+        .info { padding: 10px; }
+        
+        #details { display: none; padding: 20px; max-width: 800px; margin: auto; }
+        .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; border-radius: 8px; margin: 20px 0; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        a.btn { display: inline-block; margin: 6px; padding: 10px 14px; background: #00b894; color: #fff; text-decoration: none; border-radius: 6px; }
+    </style>
+</head>
 <body>
-<header><h2>Kan9</h2><input id=q placeholder="Search anime"><button onclick="search()">Search</button></header>
-<div id=details><h2 id=title></h2><iframe id=tr></iframe><p id=syn></p><div id=links></div></div>
-<div id=grid></div>
+
+<header>
+    <h2>Kan9</h2>
+    <input id="q" placeholder="Search anime...">
+    <button onclick="search()">Search</button>
+</header>
+
+<div id="details">
+    <button onclick="document.getElementById('details').style.display='none'">Back to Results</button>
+    <h2 id="title"></h2>
+    <div class="video-container">
+        <iframe id="tr" allowfullscreen></iframe>
+    </div>
+    <p id="syn"></p>
+    <div id="links"></div>
+</div>
+
+<div id="grid"></div>
+
 <script>
-async function load(url){let r=await fetch(url);let j=await r.json();let g=document.getElementById('grid');g.innerHTML='';
-j.data.forEach(a=>{let c=document.createElement('div');c.className='card';c.innerHTML=`<img src="${a.images.jpg.image_url}"><div class=info><b>${a.title}</b><br>тнР ${a.score??'N/A'}</div>`;
-c.onclick=()=>show(a);g.appendChild(c);});}
-function search(){load('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(q.value)+'&limit=20')}
-function show(a){
-details.style.display='block';
-title.textContent=a.title;
-syn.textContent=a.synopsis||'No synopsis.';
-tr.src=a.trailer&&a.trailer.embed_url?a.trailer.embed_url:'';
-links.innerHTML='';
-[['Crunchyroll','https://www.crunchyroll.com/search?q='],['Netflix','https://www.netflix.com/search?q='],['YouTube','https://www.youtube.com/results?search_query=']].forEach(x=>{
-let e=document.createElement('a');e.className='btn';e.target='_blank';e.href=x[1]+encodeURIComponent(a.title);e.textContent=x[0];links.appendChild(e);});
-window.scrollTo({top:0,behavior:'smooth'});
-}
-load('https://api.jikan.moe/v4/top/anime');
-</script></body></html>
+    async function load(url) {
+        let r = await fetch(url);
+        let j = await r.json();
+        let g = document.getElementById('grid');
+        g.innerHTML = '';
+        j.data.forEach(a => {
+            let c = document.createElement('div');
+            c.className = 'card';
+            c.innerHTML = `<img src="${a.images.jpg.image_url}"><div class=info><b>${a.title}</b><br>Score: ${a.score ?? 'N/A'}</div>`;
+            c.onclick = () => show(a);
+            g.appendChild(c);
+        });
+    }
+
+    function search() {
+        let query = document.getElementById('q').value;
+        load('https://api.jikan.moe/v4/anime?q=' + encodeURIComponent(query) + '&limit=20');
+    }
+
+    function show(a) {
+        document.getElementById('details').style.display = 'block';
+        document.getElementById('title').textContent = a.title;
+        document.getElementById('syn').textContent = a.synopsis || 'No synopsis available.';
+        
+        // Update trailer/embed
+        let tr = document.getElementById('tr');
+        tr.src = a.trailer && a.trailer.embed_url ? a.trailer.embed_url : '';
+        
+        // Update links
+        let links = document.getElementById('links');
+        links.innerHTML = '';
+        const platforms = [
+            ['Watch on YouTube', 'https://www.youtube.com/results?search_query='],
+            ['Crunchyroll', 'https://www.crunchyroll.com/search?q='],
+            ['Netflix', 'https://www.netflix.com/search?q=']
+        ];
+        
+        platforms.forEach(x => {
+            let e = document.createElement('a');
+            e.className = 'btn';
+            e.target = '_blank';
+            e.href = x[1] + encodeURIComponent(a.title + " episode 1");
+            e.textContent = x[0];
+            links.appendChild(e);
+        });
+        
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // Initial load
+    load('https://api.jikan.moe/v4/top/anime');
+</script>
+
+</body>
+</html>
