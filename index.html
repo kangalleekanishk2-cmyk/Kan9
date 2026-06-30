@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 body{margin:0;background:#111;color:#fff;font:14px sans-serif}
-header{display:flex;padding:10px;background:#1b1b1b;gap:10px;align-items:center}
+header{display:flex;padding:10px;background:#1b1b1b;gap:10px;align-items:center;flex-wrap:wrap}
 input{flex:1;padding:8px}
 #grid{display:grid;grid-template:auto/repeat(auto-fill,minmax(160px,1fr));gap:15px;padding:15px}
 .card{background:#222;border-radius:8px;cursor:pointer;position:relative}
@@ -22,13 +22,14 @@ input{flex:1;padding:8px}
     <h3 onclick="location.reload()" style="cursor:pointer">Kan9</h3>
     <input id=q placeholder="Search...">
     <button onclick="search()">Search</button>
+    <button onclick="loadSeasonal()">Seasonal</button>
     <button onclick="showFavorites()">⭐ Favorites</button>
 </header>
 <div id=d>
     <button onclick="d.style.display='none'">Back</button>
     <h2 id=t></h2>
     <div class=vid><iframe id=tr></iframe></div>
-    <p id=s></p> <!-- This was the missing element causing the crash -->
+    <p id=s></p>
     <div class=credit>Watch on official platforms:</div>
     <div id=l></div>
 </div>
@@ -38,11 +39,9 @@ input{flex:1;padding:8px}
 let favs = JSON.parse(localStorage.getItem('favs') || '[]');
 
 async function load(u){
-    try {
-        let res = await fetch(u);
-        let j = await res.json();
-        render(j.data);
-    } catch(e) { console.error("Load error:", e); }
+    let res = await fetch(u);
+    let j = await res.json();
+    render(j.data);
 }
 
 function render(data){
@@ -66,8 +65,8 @@ function toggleFav(e, a){
 }
 
 function showFavorites(){render(favs);}
-
 function search(){load('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(q.value))}
+function loadSeasonal(){load('https://api.jikan.moe/v4/seasons/2026/summer');}
 
 function show(a,t){
     d.style.display='block';
@@ -75,8 +74,9 @@ function show(a,t){
     document.getElementById('s').innerText=a.synopsis||'No synopsis.';
     tr.src=a.trailer?.embed_url||'';
     
+    // Now searching for "dub stream" on Google
     let platforms = ['YouTube','Crunchyroll','Netflix','Google Search'];
-    l.innerHTML=platforms.map(p=>`<a class=btn target=_blank href="${p==='Google Search' ? 'https://www.google.com/search?q='+encodeURIComponent(t+' stream') : 'https://www.'+p.toLowerCase()+'.com/search?q='+encodeURIComponent(t)}">${p}</a>`).join('');
+    l.innerHTML=platforms.map(p=>`<a class=btn target=_blank href="${p==='Google Search' ? 'https://www.google.com/search?q='+encodeURIComponent(t+' dub stream') : 'https://www.'+p.toLowerCase()+'.com/search?q='+encodeURIComponent(t)}">${p}</a>`).join('');
     scrollTo(0,0);
 }
 
