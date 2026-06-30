@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeStream - Discover</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #111217;
+            color: #fff;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #232531;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #ff4757;
+            font-size: 28px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #232531;
+            background: #1c1d24;
+            color: white;
+            width: 250px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #e84118;
+        }
+
+        /* Video Player Section */
+        .player-container {
+            display: none;
+            margin-bottom: 40px;
+            background: #1c1d24;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #232531;
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 5px;
+        }
+
+        /* Grid Layout */
+        .anime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 25px;
+        }
+
+        .anime-card {
+            background: #1c1d24;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            border: 1px solid #232531;
+        }
+
+        .anime-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff4757;
+        }
+
+        .anime-card img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+        }
+
+        .anime-info {
+            padding: 12px;
+        }
+
+        .anime-title {
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 5px;
+        }
+
+        .anime-meta {
+            font-size: 12px;
+            color: #a4b0be;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>AnimeStream</h1>
+        <div class="search-box">
+            <input type="text" id="search-input" placeholder="Search for an anime...">
+            <button onclick="searchAnime()">Search</button>
+        </div>
+    </header>
+
+    <!-- Watch Section (Hidden by default) -->
+    <div class="player-container" id="player-container">
+        <h2 id="player-title" style="margin-bottom: 15px;">Now Watching</h2>
+        <div class="video-wrapper">
+            <!-- Using Official YouTube Trailers as the video source -->
+            <iframe id="video-player" src="" allowfullscreen></iframe>
+        </div>
+        <p id="player-description" style="color: #a4b0be; font-size: 14px;"></p>
+    </div>
+
+    <h2>Trending Anime</h2>
+    <br>
+    <div class="anime-grid" id="anime-display">
+        <!-- Anime cards will be injected here by JavaScript -->
+    </div>
+
+    <script>
+        // Fetch top anime on load
+        window.onload = () => {
+            fetchAnime('https://api.jikan.moe/v4/top/anime');
+        };
+
+        function searchAnime() {
+            const query = document.getElementById('search-input').value;
+            if (query.trim() === '') return;
+            fetchAnime(`https://api.jikan.moe/v4/anime?q=${query}&limit=20`);
+        }
+
+        async function fetchAnime(url) {
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                displayAnime(result.data);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        function displayAnime(animeList) {
+            const container = document.getElementById('anime-display');
+            container.innerHTML = ''; // Clear previous results
+
+            if (!animeList || animeList.length === 0) {
+                container.innerHTML = '<p>No anime found.</p>';
+                return;
+            }
+
+            animeList.forEach(anime => {
+                const card = document.createElement('div');
+                card.className = 'anime-card';
+                // Store video and details in data attributes for the player
+                const embedUrl = anime.trailer?.embed_url ? anime.trailer.embed_url : '';
+                
+                card.onclick = () => playAnime(anime.title, embedUrl, anime.synopsis);
+
+                card.innerHTML = `
+                    <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
+                    <div class="anime-info">
+                        <div class="anime-title">${anime.title}</div>
+                        <div class="anime-meta">Score: ${anime.score || 'N/A'}</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function playAnime(title, embedUrl, synopsis) {
+            const playerContainer = document.getElementById('player-container');
+            const player = document.getElementById('video-player');
+            const playerTitle = document.getElementById('player-title');
+            const playerDesc = document.getElementById('player-description');
+
+            if (!embedUrl) {
+                alert("Sorry, no trailer/video available for this title!");
+                return;
+            }
+
+            playerTitle.innerText = `Watching: ${title}`;
+            // Clean up the URL to prevent autoplay blocks if necessary
+            player.src = embedUrl;
+            playerDesc.innerText = synopsis || "No description available.";
+            
+            playerContainer.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
