@@ -5,277 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kan9 - Discover</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: #111217;
-            color: #fff;
-            padding: 20px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #232531;
-            margin-bottom: 30px;
-        }
-
-        h1 {
-            color: #ff4757;
-            font-size: 28px;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-        }
-
-        input {
-            padding: 10px 15px;
-            border-radius: 5px;
-            border: 1px solid #232531;
-            background: #1c1d24;
-            color: white;
-            width: 250px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background: #ff4757;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        button:hover {
-            background: #e84118;
-        }
-
-        /* Video Player Section */
-        .player-container {
-            display: none;
-            margin-bottom: 40px;
-            background: #1c1d24;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #232531;
-        }
-
-        .video-wrapper {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-            height: 0;
-            overflow: hidden;
-            margin-bottom: 15px;
-        }
-
-        .video-wrapper iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 5px;
-        }
-
-        .player-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .control-btn {
-            background: #232531;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            padding: 8px 15px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .control-btn.active {
-            background: #ff4757;
-        }
-
-        /* Grid Layout */
-        .anime-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 25px;
-        }
-
-        .anime-card {
-            background: #1c1d24;
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
-            border: 1px solid #232531;
-        }
-
-        .anime-card:hover {
-            transform: translateY(-5px);
-            border-color: #ff4757;
-        }
-
-        .anime-card img {
-            width: 100%;
-            height: 280px;
-            object-fit: cover;
-        }
-
-        .anime-info {
-            padding: 12px;
-        }
-
-        .anime-title {
-            font-size: 14px;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 5px;
-        }
-
-        .anime-meta {
-            font-size: 12px;
-            color: #a4b0be;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: #111217; color: #fff; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 2px solid #232531; margin-bottom: 30px; }
+        h1 { color: #ff4757; font-size: 28px; }
+        .search-box { display: flex; gap: 10px; }
+        input { padding: 10px; border-radius: 5px; border: 1px solid #232531; background: #1c1d24; color: white; width: 250px; }
+        button { padding: 10px 20px; background: #ff4757; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .player-container { display: none; margin-bottom: 40px; background: #1c1d24; padding: 20px; border-radius: 8px; border: 1px solid #232531; }
+        .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin-bottom: 15px; }
+        .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .player-controls { display: flex; gap: 10px; margin-bottom: 15px; }
+        .control-btn { background: #232531; color: white; border: none; border-radius: 5px; padding: 8px 15px; cursor: pointer; }
+        .control-btn.active { background: #ff4757; }
+        .anime-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; }
+        .anime-card { background: #1c1d24; border-radius: 8px; overflow: hidden; cursor: pointer; border: 1px solid #232531; }
+        .anime-card img { width: 100%; height: 280px; object-fit: cover; }
+        .anime-info { padding: 12px; }
+        .anime-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     </style>
 </head>
 <body>
-
     <header>
         <h1>Kan9</h1>
         <div class="search-box">
-            <input type="text" id="search-input" placeholder="Search for an anime...">
+            <input type="text" id="search-input" placeholder="Search anime...">
             <button onclick="searchAnime()">Search</button>
         </div>
     </header>
-
     <div class="player-container" id="player-container">
-        <h2 id="player-title" style="margin-bottom: 15px;">Now Watching</h2>
-        
+        <h2 id="player-title">Now Watching</h2>
         <div class="player-controls">
-            <button id="btn-stream" class="control-btn active" onclick="switchSource('stream')">Watch Episode</button>
+            <button id="btn-stream" class="control-btn" onclick="switchSource('stream')">Watch Episode</button>
             <button id="btn-trailer" class="control-btn" onclick="switchSource('trailer')">Watch Trailer</button>
         </div>
-
         <div class="video-wrapper">
             <iframe id="video-player" src="" allowfullscreen></iframe>
         </div>
-        <p id="player-description" style="color: #a4b0be; font-size: 14px;"></p>
+        <p id="player-description"></p>
     </div>
-
-    <h2>Trending Anime</h2>
-    <br>
-    <div class="anime-grid" id="anime-display">
-        </div>
-
+    <h2>Trending</h2>
+    <div class="anime-grid" id="anime-display"></div>
     <script>
-        let currentMalId = "";
-        let currentTrailerUrl = "";
-
-        // Fetch top anime on load
-        window.onload = () => {
-            fetchAnime('https://api.jikan.moe/v4/top/anime');
-        };
-
-        function searchAnime() {
-            const query = document.getElementById('search-input').value;
-            if (query.trim() === "") return;
-            fetchAnime(`https://api.jikan.moe/v4/anime?q=${query}&limit=20`);
-        }
-
-        async function fetchAnime(url) {
-            try {
-                const response = await fetch(url);
-                const result = await response.json();
-                displayAnime(result.data);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        }
-
-        function displayAnime(animeList) {
-            const container = document.getElementById('anime-display');
-            container.innerHTML = ''; // Clear previous results
-
-            if (!animeList || animeList.length === 0) {
-                container.innerHTML = '<p>No anime found.</p>';
-                return;
-            }
-
-            animeList.forEach(anime => {
-                const card = document.createElement('div');
-                card.className = 'anime-card';
-                
-                const embedUrl = anime.trailer?.embed_url || '';
-                const malId = anime.mal_id;
-
-                card.onclick = () => playAnime(anime.title, malId, embedUrl, anime.synopsis);
-
-                card.innerHTML = `
-                    <img src="${anime.images.jpg.image_url}" alt="${anime.title}">
-                    <div class="anime-info">
-                        <div class="anime-title">${anime.title}</div>
-                        <div class="anime-meta">Score: ${anime.score || 'N/A'}</div>
-                    </div>
-                `;
-                container.appendChild(card);
+        let currentMalId = "", currentTrailerUrl = "";
+        window.onload = () => fetchAnime('https://api.jikan.moe/v4/top/anime');
+        function searchAnime() { fetchAnime(`https://api.jikan.moe/v4/anime?q=${document.getElementById('search-input').value}&limit=20`); }
+        async function fetchAnime(url) { const res = await fetch(url); const data = await res.json(); displayAnime(data.data); }
+        function displayAnime(list) {
+            const cont = document.getElementById('anime-display'); cont.innerHTML = '';
+            list.forEach(a => {
+                const card = document.createElement('div'); card.className = 'anime-card';
+                card.onclick = () => playAnime(a.title, a.mal_id, a.trailer?.embed_url, a.synopsis);
+                card.innerHTML = `<img src="${a.images.jpg.image_url}"><div class="anime-info"><div class="anime-title">${a.title}</div></div>`;
+                cont.appendChild(card);
             });
         }
-
-        function playAnime(title, malId, embedUrl, synopsis) {
-            const playerContainer = document.getElementById('player-container');
-            const playerTitle = document.getElementById('player-title');
-            const playerDesc = document.getElementById('player-description');
-
-            currentMalId = malId;
-            currentTrailerUrl = embedUrl;
-
-            playerTitle.innerText = `Watching: ${title}`;
-            playerDesc.innerText = synopsis || "No description available.";
-            
-            // Automatically select episode stream mode on click
+        function playAnime(t, id, url, desc) {
+            currentMalId = id; currentTrailerUrl = url;
+            document.getElementById('player-title').innerText = "Watching: " + t;
+            document.getElementById('player-description').innerText = desc || "";
+            document.getElementById('player-container').style.display = 'block';
             switchSource('stream');
-
-            playerContainer.style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
         function switchSource(type) {
             const player = document.getElementById('video-player');
-            const btnStream = document.getElementById('btn-stream');
-            const btnTrailer = document.getElementById('btn-trailer');
-
             if (type === 'stream') {
-                btnStream.classList.add('active');
-                btnTrailer.classList.remove('active');
-                // Uses the reliable, direct MyAnimeList ID tracking system
-                player.src = `https://vidsrc.pro/embed/anime/${currentMalId}/1/1`;
+                window.open(`https://vidsrc.pro/embed/anime/${currentMalId}/1/1`, '_blank');
+                player.src = "";
             } else if (type === 'trailer') {
-                btnStream.classList.remove('active');
-                btnTrailer.classList.add('active');
-                if (currentTrailerUrl) {
-                    player.src = currentTrailerUrl;
-                } else {
-                    alert("Sorry, no official trailer available for this title!");
-                    player.src = "";
-                }
+                player.src = currentTrailerUrl || "";
+                if (!currentTrailerUrl) alert("No trailer found!");
             }
         }
     </script>
