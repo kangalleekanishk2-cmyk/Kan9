@@ -27,7 +27,7 @@ button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;bo
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
-      appId: "YOUR_ONESIGNAL_APP_ID", // <-- Replace this with your OneSignal App ID
+      appId: "YOUR_ONESIGNAL_APP_ID", // <-- Replace this with your OneSignal App ID string
       safari_web_id: "web.onesignal.auto.064be486-da22-487b-8212-32b0051174c6",
       notifyButton: { enable: true }
     });
@@ -66,7 +66,7 @@ function closeDetails() {
     document.getElementById('tr').src = '';
 }
 
-// Optimized GraphQL query runner for AniList core connection
+// Fixed GraphQL AniList API data router
 async function anilistQuery(query, variables) {
     try {
         let res = await fetch('https://anilist.co', {
@@ -145,8 +145,6 @@ async function show(a, t) {
 
     d.style.display = 'block';
     t_txt.innerText = t;
-    
-    // Strip HTML summary markup from AniList descriptions cleanly
     s.innerHTML = a.description || 'No synopsis available.';
     tr.src = ''; 
     
@@ -154,16 +152,17 @@ async function show(a, t) {
 
     let platforms = [
         ['Crunchyroll', 'https://crunchyroll.com'],
-        ['YouTube (Official)', 'https://youtube.com'],
+        ['YouTube', 'https://youtube.com'],
         ['Netflix', 'https://netflix.com']
     ];
+    
+    // Corrected layout template execution parameter map
     l.innerHTML = platforms.map(p => {
         return `<a class="btn" target="_blank" href="${p[1] + encodeURIComponent(t)}">${p[0]}</a>`;
     }).join('');
     
     window.scrollTo(0, 0);
 
-    // Direct alternative tracker routing using standard database cross-mapping codes
     let trackingId = a.idMal || a.id;
     tr.src = `https://vidsrc.me{trackingId}`;
     
