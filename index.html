@@ -59,7 +59,10 @@ button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;bo
 <div id="grid">Loading titles...</div>
 
 <script>
-let favs = JSON.parse(localStorage.getItem('favs') || '[]');
+let favs = [];
+try {
+    favs = JSON.parse(localStorage.getItem('favs') || '[]');
+} catch(e) { console.error(e); }
 
 function closeDetails() {
     document.getElementById('d').style.display = 'none';
@@ -82,6 +85,7 @@ async function anilistQuery(query, variables) {
 }
 
 async function loadTrending() {
+    document.getElementById('grid').innerHTML = '<div style="padding:20px">Loading titles...</div>';
     let query = `query ($perPage: Int) { Page (perPage: $perPage) { media (type: ANIME, sort: TRENDING_DESC) { id idMal title { english romaji } description coverImage { large } } } }`;
     let data = await anilistQuery(query, { perPage: 30 });
     render(data);
@@ -90,12 +94,14 @@ async function loadTrending() {
 async function search() {
     let qVal = document.getElementById('q').value;
     if(!qVal) return;
+    document.getElementById('grid').innerHTML = '<div style="padding:20px">Searching...</div>';
     let query = `query ($search: String) { Page (perPage: 30) { media (type: ANIME, search: $search) { id idMal title { english romaji } description coverImage { large } } } }`;
     let data = await anilistQuery(query, { search: qVal });
     render(data);
 }
 
 async function loadSeasonal() {
+    document.getElementById('grid').innerHTML = '<div style="padding:20px">Loading Seasonal...</div>';
     let query = `query { Page (perPage: 30) { media (type: ANIME, season: SUMMER, seasonYear: 2026, sort: POPULARITY_DESC) { id idMal title { english romaji } description coverImage { large } } } }`;
     let data = await anilistQuery(query, {});
     render(data);
@@ -155,7 +161,7 @@ async function show(a, t) {
         ['Netflix', 'https://netflix.com']
     ];
     
-    // EXPLICIT FIXED ELEMENT MAPPING 
+    // STRICT FIXED ARRAY LINK INDEX MAPPING (p[0] = Name, p[1] = Link URL)
     l.innerHTML = platforms.map(p => {
         return `<a class="btn" target="_blank" href="${p[1] + encodeURIComponent(t)}">${p[0]}</a>`;
     }).join('');
