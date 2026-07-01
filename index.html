@@ -66,40 +66,22 @@ function closeDetails() {
     document.getElementById('tr').src = '';
 }
 
-// Bypasses Jikan blocks by converting external server data models to your local uniform layout parameters
-async function loadHomeBackup() {
+// Proxied fetch loader to bypass Vercel deployment IP tracking blocks
+async function load(u){
     try {
-        let res = await fetch('https://vercel.app');
-        let j = await res.json();
-        
-        let normalizedData = j.results.map(item => ({
-            title: item.title,
-            mal_id: item.id,
-            synopsis: "Currently broadcasting. Select watch option above to load tracking playback frames.",
-            images: { jpg: { image_url: item.image } }
-        }));
-        render(normalizedData);
-    } catch(e) {
-        console.error("Home backup routing crash:", e);
-        document.getElementById('grid').innerHTML = '<div style="padding:20px">All server routing nodes are congested. Please try refreshing shortly.</div>';
-    }
-}
-
-async function load(u, isHome = false){
-    try {
-        let res = await fetch(u);
-        if(!res.ok && isHome) {
-            loadHomeBackup();
-            return;
-        }
+        let proxiedUrl = "https://corsproxy.io?" + encodeURIComponent(u);
+        let res = await fetch(proxiedUrl);
         let j = await res.json();
         render(j.data);
     } catch(e) { 
         console.error("Load error:", e); 
-        if(isHome) {
-            loadHomeBackup();
-        } else {
-            document.getElementById('grid').innerHTML = '<div style="padding:20px">Search service rate-limited. Try again in a few seconds.</div>';
+        // Fallback to try direct fetching if the proxy is busy
+        try {
+            let directRes = await fetch(u);
+            let directJ = await directRes.json();
+            render(directJ.data);
+        } catch(err) {
+            document.getElementById('grid').innerHTML = '<div style="padding:20px">All server routing nodes are congested. Please try refreshing shortly.</div>';
         }
     }
 }
@@ -115,7 +97,7 @@ function render(data){
         let t=a.title_english||a.title;
         let c=document.createElement('div');
         c.className='card';
-        c.innerHTML=`<img src="${a.images?.jpg?.image_url || a.images?.jpg?.large_image_url}"><div style="padding:10px"><b>${t}</b></div><button class="fav-btn">⭐</button>`;
+        c.innerHTML=`<img src="${a.images.jpg.image_url}"><div style="padding:10px"><b>${t}</b></div><button class="fav-btn">⭐</button>`;
         
         c.querySelector('.fav-btn').onclick = (e) => {
             e.stopPropagation();
@@ -168,73 +150,27 @@ async function show(a, t) {
     
     window.scrollTo(0, 0);
 
-    // Dynamic extraction engine utilizing explicit parameters
-    let searchId = a.mal_id;
-    if (typeof searchId === 'string') {
-        // Already contains a parsed backup query signature link directly
-        loadVideoPlayer(searchId, tr, epContainer);
-    } else {
-        try {
-            let searchRes = await fetch(`https://vercel.app{encodeURIComponent(t)}`);
-            let searchData = await searchRes.json();
-            
-            if (searchData.results && searchData.results.length > 0) {
-                loadVideoPlayer(searchData.results[0].id, tr, epContainer);
-            } else {
-                // Instantly fall back to automated zero-setup backup source mirror tracking frame mapping
-                tr.src = `https://vidsrc.me{a.mal_id}`;
-                epContainer.innerHTML = "Loaded streaming player from secondary direct backup server.";
-            }
-        } catch (err) {
-            tr.src = `https://vidsrc.me{a.mal_id}`;
-            epContainer.innerHTML = "Loaded streaming player from secondary direct backup server.";
-        }
-    }
-}
-
-async function loadVideoPlayer(animeId, trElement, containerElement) {
     try {
-        let infoRes = await fetch(`https://vercel.app{animeId}`);
-        let infoData = await infoRes.json();
+        // High stability direct video embed using Mal ID database map indices 
+        tr.src = `https://vidsrc.me{a.mal_id}`;
         
-        if (infoData.episodes && infoData.episodes.length > 0) {
-            containerElement.innerHTML = '';
-            
-            infoData.episodes.forEach(ep => {
-                let btn = document.createElement('button');
-                btn.className = 'btn';
-                btn.innerText = `Ep ${ep.number}`;
-                btn.onclick = async () => {
-                    document.querySelectorAll('#episodes-container .btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    
-                    try {
-                        let streamRes = await fetch(`https://vercel.app{ep.id}`);
-                        let streamData = await streamRes.json();
-                        
-                        if (streamData.headers && streamData.headers.Referer) {
-                            trElement.src = streamData.headers.Referer;
-                        } else if (streamData.sources && streamData.sources.length > 0) {
-                            trElement.src = streamData.sources[0].url; 
-                        }
-                    } catch (err) {
-                        trElement.src = `https://unbxd.cc{ep.id}`;
-                    }
-                };
-                containerElement.appendChild(btn);
-            });
-            containerElement.firstChild.click();
-        } else {
-            containerElement.innerHTML = "No watchable episodes cataloged.";
-        }
-    } catch(e) {
-        trElement.src = `https://vidsrc.me{animeId}`;
-        containerElement.innerHTML = "Loaded streaming player from backup mirror panel.";
+        epContainer.innerHTML = '';
+        let infoText = document.createElement('div');
+        infoText.style.padding = '5px';
+        infoText.style.color = '#aaa';
+        infoText.innerText = "✨ Use the Player window menu inside the stream frame above to change episodes and video mirrors seamlessly.";
+        epContainer.appendChild(infoText);
+        
+    } catch (err) {
+        console.error("Player loading error:", err);
+        epContainer.innerHTML = "Streaming service fallback failed. Try alternative platforms below.";
     }
 }
 
-// Initial entry sequence loader
+// Fixed loader execution trigger loop bound to document readiness lifecycle
 window.addEventListener('DOMContentLoaded', () => {
-    load('https://jikan.moe', true);
+    load('https://jikan.moe');
 });
 </script>
+</body>
+</html>
