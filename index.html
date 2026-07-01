@@ -66,7 +66,6 @@ function closeDetails() {
     document.getElementById('tr').src = '';
 }
 
-// Fixed GraphQL AniList API data router
 async function anilistQuery(query, variables) {
     try {
         let res = await fetch('https://anilist.co', {
@@ -156,7 +155,7 @@ async function show(a, t) {
         ['Netflix', 'https://netflix.com']
     ];
     
-    // Corrected layout template execution parameter map
+    // Explicit array targeting layout fix
     l.innerHTML = platforms.map(p => {
         return `<a class="btn" target="_blank" href="${p[1] + encodeURIComponent(t)}">${p[0]}</a>`;
     }).join('');
