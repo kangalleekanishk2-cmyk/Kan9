@@ -81,24 +81,22 @@ function toggleFav(e, a){
 }
 
 function showFavorites(){ render(favs); }
-function search(){ load('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(q.value)); }
-function loadSeasonal(){ load('https://api.jikan.moe/v4/seasons/2026/summer'); }
+function search(){ load('https://jikan.moe); }
+function loadSeasonal(){ load('https://jikan.moe'); }
 
-async function show(a,t){
-    d.style.display='block';
-    t_txt.innerText=t;
-    s.innerText=a.synopsis||'No synopsis available.';
-    tr.src=''; // Reset stream frame until an episode is selected
+async function show(a, t) {
+    d.style.display = 'block';
+    t_txt.innerText = t;
+    s.innerText = a.synopsis || 'No synopsis available.';
+    tr.src = ''; 
     
-    // Clear and prepare video list container
     const epContainer = document.getElementById('episodes-container');
-    epContainer.innerHTML = "Loading watch links...";
+    epContainer.innerHTML = "Searching for active streaming links...";
 
-    // Traditional backup deep links
     let platforms = [
-        ['Crunchyroll', 'https://www.crunchyroll.com/search?q='],
-        ['YouTube (Official)', 'https://www.youtube.com/results?search_query='],
-        ['Netflix', 'https://www.netflix.com/search?q=']
+        ['Crunchyroll', 'https://crunchyroll.com'],
+        ['YouTube (Official)', 'https://youtube.com'],
+        ['Netflix', 'https://netflix.com']
     ];
     l.innerHTML = platforms.map(p => {
         let query = t;
@@ -106,67 +104,64 @@ async function show(a,t){
         return `<a class=btn target=_blank href="${p[1] + encodeURIComponent(query)}">${p[0]}</a>`;
     }).join('');
     
-    scrollTo(0,0);
+    scrollTo(0, 0);
 
-    // Dynamic Video Streaming API Core replacement
     try {
-        // Query the video aggregator matching Jikan's title 
-        let searchRes = await fetch(`https://amvstr.me{encodeURIComponent(t)}`);
+        // Step 1: Query active Consumet proxy endpoint
+        let searchRes = await fetch(`https://vercel.app{encodeURIComponent(t)}`);
         let searchData = await searchRes.json();
         
         if (searchData.results && searchData.results.length > 0) {
-            // Pick first closely matched entry configuration
-            let streamAnimeId = searchData.results[0].id;
+            let animeId = searchData.results[0].id;
             
-            // Query total available internal video tracking list
-            let infoRes = await fetch(`https://amvstr.me{streamAnimeId}`);
+            // Step 2: Grab full episode payload object structure
+            let infoRes = await fetch(`https://vercel.app{animeId}`);
             let infoData = await infoRes.json();
             
             if (infoData.episodes && infoData.episodes.length > 0) {
                 epContainer.innerHTML = '';
                 
-                infoData.episodes.forEach((ep, index) => {
+                infoData.episodes.forEach(ep => {
                     let btn = document.createElement('button');
                     btn.className = 'btn';
                     btn.innerText = `Ep ${ep.number}`;
                     btn.onclick = async () => {
-                        // Unset active colors across other layout options
                         document.querySelectorAll('#episodes-container .btn').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
                         
-                        // Load watch video configuration parameters directly into layout
                         try {
-                            let watchRes = await fetch(`https://amvstr.me{ep.id}`);
-                            let watchData = await watchRes.json();
+                            // Step 3: Fetch active player links for selected episode
+                            let streamRes = await fetch(`https://vercel.app{ep.id}`);
+                            let streamData = await streamRes.json();
                             
-                            // Point your player directly to the embedded zero-setup video player frame
-                            if(watchData.nspl && watchData.nspl.main) {
-                                tr.src = watchData.nspl.main;
-                            } else if (watchData.iframe && watchData.iframe.main) {
-                                tr.src = watchData.iframe.main;
+                            // Load valid embedding target parameters safely
+                            if (streamData.headers && streamData.headers.Referer) {
+                                tr.src = streamData.headers.Referer;
+                            } else if (streamData.sources && streamData.sources.length > 0) {
+                                tr.src = `https://unbxd.cc{ep.id}`; 
                             }
-                        } catch(err) {
-                            console.error("Stream tracking failure:", err);
+                        } catch (err) {
+                            console.error("Failed loading source mirror:", err);
                         }
                     };
                     epContainer.appendChild(btn);
                 });
                 
-                // Programmatically trigger selection of the first episode 
+                // Fire off first episode sequence automatic stream allocation selection
                 epContainer.firstChild.click();
             } else {
-                epContainer.innerHTML = "No distinct watchable episodes cataloged.";
+                epContainer.innerHTML = "No watchable episodes cataloged.";
             }
         } else {
             epContainer.innerHTML = "No stream links found matching this title.";
         }
     } catch (err) {
-        console.error("Streaming service lookup failure:", err);
+        console.error("Consumet server routing failure:", err);
         epContainer.innerHTML = "Streaming service is currently unreachable.";
     }
 }
 
-load('https://api.jikan.moe/v4/top/anime');
+load('https://jikan.moe');
 </script>
 </body>
 </html>
