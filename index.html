@@ -24,29 +24,34 @@ button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;bo
 <body>
 <header>
     <h3 onclick="location.reload()" style="cursor:pointer;margin:0 10px 0 0">Kan9</h3>
-    <input id=q placeholder="Search...">
+    <input id="q" placeholder="Search...">
     <button onclick="search()">Search</button>
     <button onclick="loadSeasonal()">Seasonal</button>
     <button onclick="showFavorites()">⭐ Favorites</button>
 </header>
 
-<div id=d>
-    <button onclick="d.style.display='none'; tr.src=''">Back</button>
-    <h2 id=t_txt></h2>
-    <div class=vid><iframe id=tr allowfullscreen src=""></iframe></div>
+<div id="d">
+    <button onclick="closeDetails()">Back</button>
+    <h2 id="t_txt"></h2>
+    <div class="vid"><iframe id="tr" allowfullscreen src=""></iframe></div>
     
     <div style="font-weight:bold; margin-top:10px;">Select Episode:</div>
     <div id="episodes-container">Searching for watchable episodes...</div>
 
-    <p id=s></p>
-    <div class=credit>Alternative Platforms:</div>
-    <div id=l></div>
+    <p id="s"></p>
+    <div class="credit">Alternative Platforms:</div>
+    <div id="l"></div>
 </div>
 
-<div id=grid></div>
+<div id="grid"></div>
 
 <script>
 let favs = JSON.parse(localStorage.getItem('favs') || '[]');
+
+function closeDetails() {
+    document.getElementById('d').style.display = 'none';
+    document.getElementById('tr').src = '';
+}
 
 async function load(u){
     try {
@@ -57,22 +62,30 @@ async function load(u){
 }
 
 function render(data){
+    const grid = document.getElementById('grid');
     grid.innerHTML='';
     if(!data || data.length === 0) {
         grid.innerHTML = '<div style="padding:20px">No results found.</div>';
         return;
     }
     data.forEach(a=>{
-        let t=a.title_english||a.title, c=document.createElement('div');
+        let t=a.title_english||a.title;
+        let c=document.createElement('div');
         c.className='card';
-        c.innerHTML=`<img src="${a.images.jpg.image_url}"><div style="padding:10px"><b>${t}</b></div><button class="fav-btn" onclick="toggleFav(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})">⭐</button>`;
-        c.onclick=(e)=>{if(e.target.tagName!=='BUTTON')show(a,t)};
+        c.innerHTML=`<img src="${a.images.jpg.image_url}"><div style="padding:10px"><b>${t}</b></div><button class="fav-btn">⭐</button>`;
+        
+        c.querySelector('.fav-btn').onclick = (e) => {
+            e.stopPropagation();
+            toggleFav(a);
+        };
+        c.onclick=(e)=>{
+            if(e.target.tagName!=='BUTTON') show(a,t);
+        };
         grid.appendChild(c);
     });
 }
 
-function toggleFav(e, a){
-    e.stopPropagation();
+function toggleFav(a){
     let id = a.mal_id;
     if(favs.find(f=>f.mal_id===id)) favs = favs.filter(f=>f.mal_id!==id);
     else favs.push(a);
@@ -81,16 +94,22 @@ function toggleFav(e, a){
 }
 
 function showFavorites(){ render(favs); }
-function search(){ load('https://jikan.moe); }
+function search(){ load('https://jikan.moe(document.getElementById('q').value)); }
 function loadSeasonal(){ load('https://jikan.moe'); }
 
 async function show(a, t) {
+    const d = document.getElementById('d');
+    const t_txt = document.getElementById('t_txt');
+    const s = document.getElementById('s');
+    const tr = document.getElementById('tr');
+    const l = document.getElementById('l');
+    const epContainer = document.getElementById('episodes-container');
+
     d.style.display = 'block';
     t_txt.innerText = t;
     s.innerText = a.synopsis || 'No synopsis available.';
     tr.src = ''; 
     
-    const epContainer = document.getElementById('episodes-container');
     epContainer.innerHTML = "Searching for active streaming links...";
 
     let platforms = [
@@ -104,18 +123,16 @@ async function show(a, t) {
         return `<a class=btn target=_blank href="${p[1] + encodeURIComponent(query)}">${p[0]}</a>`;
     }).join('');
     
-    scrollTo(0, 0);
+    window.scrollTo(0, 0);
 
     try {
-        // Step 1: Query active Consumet proxy endpoint
-        let searchRes = await fetch(`https://vercel.app{encodeURIComponent(t)}`);
+        let searchRes = await fetch(`https://consumet.org{encodeURIComponent(t)}`);
         let searchData = await searchRes.json();
         
         if (searchData.results && searchData.results.length > 0) {
-            let animeId = searchData.results[0].id;
+            let animeId = searchData.results[0].id; 
             
-            // Step 2: Grab full episode payload object structure
-            let infoRes = await fetch(`https://vercel.app{animeId}`);
+            let infoRes = await fetch(`https://consumet.org{animeId}`);
             let infoData = await infoRes.json();
             
             if (infoData.episodes && infoData.episodes.length > 0) {
@@ -130,24 +147,22 @@ async function show(a, t) {
                         btn.classList.add('active');
                         
                         try {
-                            // Step 3: Fetch active player links for selected episode
-                            let streamRes = await fetch(`https://vercel.app{ep.id}`);
+                            let streamRes = await fetch(`https://consumet.org{ep.id}`);
                             let streamData = await streamRes.json();
                             
-                            // Load valid embedding target parameters safely
                             if (streamData.headers && streamData.headers.Referer) {
                                 tr.src = streamData.headers.Referer;
                             } else if (streamData.sources && streamData.sources.length > 0) {
-                                tr.src = `https://unbxd.cc{ep.id}`; 
+                                tr.src = streamData.sources[0].url; 
                             }
                         } catch (err) {
                             console.error("Failed loading source mirror:", err);
+                            tr.src = `https://unbxd.cc{ep.id}`;
                         }
                     };
                     epContainer.appendChild(btn);
                 });
                 
-                // Fire off first episode sequence automatic stream allocation selection
                 epContainer.firstChild.click();
             } else {
                 epContainer.innerHTML = "No watchable episodes cataloged.";
@@ -157,7 +172,7 @@ async function show(a, t) {
         }
     } catch (err) {
         console.error("Consumet server routing failure:", err);
-        epContainer.innerHTML = "Streaming service is currently unreachable.";
+        epContainer.innerHTML = "Streaming service fallback failed. Try alternative platforms below.";
     }
 }
 
