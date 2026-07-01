@@ -84,18 +84,16 @@ function show(a,t){
     s.innerText=a.synopsis||'No synopsis available.';
     tr.src=a.trailer?.embed_url||'';
     
+    // Completely safe, legal platforms that work smoothly
     let platforms = [
-        ['YouTube', 'https://www.youtube.com/results?search_query='],
         ['Crunchyroll', 'https://www.crunchyroll.com/search?q='],
-        ['Netflix', 'https://www.netflix.com/search?q='],
-        ['Google (Sub)', 'https://www.google.com/search?q='],
-        ['Google (Dub)', 'https://www.google.com/search?q=']
+        ['YouTube (Official)', 'https://www.youtube.com/results?search_query='],
+        ['Netflix', 'https://www.netflix.com/search?q=']
     ];
     
     l.innerHTML = platforms.map(p => {
         let query = t;
-        if (p[0] === 'Google (Sub)') query = t + ' sub stream';
-        if (p[0] === 'Google (Dub)') query = t + ' dub stream';
+        if (p[0] === 'YouTube (Official)') query = t + ' official episode';
         return `<a class=btn target=_blank href="${p[1] + encodeURIComponent(query)}">${p[0]}</a>`;
     }).join('');
     
