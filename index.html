@@ -27,7 +27,7 @@ button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;bo
   window.OneSignalDeferred = window.OneSignalDeferred || [];
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
-      appId: "YOUR_ONESIGNAL_APP_ID", // <-- Replace this with your OneSignal App ID string
+      appId: "YOUR_ONESIGNAL_APP_ID", // <-- Replace this with your actual OneSignal App ID
       safari_web_id: "web.onesignal.auto.064be486-da22-487b-8212-32b0051174c6",
       notifyButton: { enable: true }
     });
@@ -46,13 +46,13 @@ button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;bo
 <div id="d">
     <button onclick="closeDetails()">Back</button>
     <h2 id="t_txt"></h2>
-    <div class=vid><iframe id="tr" allowfullscreen src=""></iframe></div>
+    <div class="vid"><iframe id="tr" allowfullscreen src=""></iframe></div>
     
     <div style="font-weight:bold; margin-top:10px;">Select Episode:</div>
     <div id="episodes-container">Searching for watchable episodes...</div>
 
     <p id="s"></p>
-    <div class=credit>Alternative Platforms:</div>
+    <div class="credit">Alternative Platforms:</div>
     <div id="l"></div>
 </div>
 
@@ -155,7 +155,7 @@ async function show(a, t) {
         ['Netflix', 'https://netflix.com']
     ];
     
-    // Explicit array element extraction format fix (p[1] for url, p[0] for text title)
+    // EXPLICIT FIXED ELEMENT MAPPING 
     l.innerHTML = platforms.map(p => {
         return `<a class="btn" target="_blank" href="${p[1] + encodeURIComponent(t)}">${p[0]}</a>`;
     }).join('');
