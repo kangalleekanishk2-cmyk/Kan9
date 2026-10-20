@@ -1,35 +1,241 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kan9 Anime Hub</title>
 <style>
-body{margin:0;background:#111;color:#fff;font:14px sans-serif}
-header{display:flex;padding:10px;background:#1b1b1b;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10}
-input{flex:1;padding:8px;border-radius:4px;border:none}
-button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;border-radius:4px}
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:15px;padding:15px}
-.card{background:#222;border-radius:8px;cursor:pointer;position:relative;overflow:hidden}
-.card img{width:100%;height:220px;object-fit:cover;display:block}
-.fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);border:0;color:gold;padding:5px;cursor:pointer;border-radius:50%;z-index:2}
-#d{display:none;padding:20px;max-width:800px;margin:auto}
-.vid{position:relative;padding-bottom:56.25%;height:0;background:#000;border-radius:8px;overflow:hidden;margin:15px 0}
-.vid iframe{position:absolute;width:100%;height:100%;border:0}
-.btn{display:inline-block;padding:8px;margin:5px;background:#00b894;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold}
-.credit{font-size:12px;color:#aaa;margin-top:10px;padding:5px}
-.loading{padding:30px;text-align:center;color:#aaa;grid-column:1/-1;font-size:16px;}
+* { box-sizing: border-box; }
+body { margin:0; background:#111; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+header { display:flex; padding:10px 15px; background:#1b1b1b; gap:10px; align-items:center; flex-wrap:wrap; position:sticky; top:0; z-index:10; border-bottom:1px solid #2a2a2a; }
+header h3 { margin:0 10px 0 0; cursor:pointer; color:#ff4757; font-size:20px; font-weight:800; }
+input { flex:1; min-width:140px; padding:10px 12px; border-radius:6px; border:1px solid #333; background:#222; color:#fff; font-size:14px; outline:none; }
+input:focus { border-color:#ff4757; }
+button { padding:10px 14px; background:#ff4757; color:#fff; border:0; cursor:pointer; border-radius:6px; font-weight:600; font-size:14px; transition:opacity 0.2s; }
+button:hover { opacity:0.9; }
+button.secondary { background:#333; }
+#grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:16px; padding:16px; min-height:80vh; }
+.card { background:#1e1e1e; border-radius:8px; cursor:pointer; position:relative; overflow:hidden; border:1px solid #282828; display:flex; flex-direction:column; transition:transform 0.15s ease; }
+.card:hover { transform: translateY(-4px); }
+.card img { width:100%; height:230px; object-fit:cover; display:block; background:#222; }
+.card-title { padding:10px; font-weight:600; font-size:13px; line-height:1.3; height:42px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; }
+.fav-btn { position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.7); border:0; color:gold; padding:6px 8px; cursor:pointer; border-radius:50%; z-index:2; font-size:14px; line-height:1; }
+#d { display:none; padding:20px; max-width:850px; margin:auto; }
+.vid { position:relative; padding-bottom:56.25%; height:0; background:#000; border-radius:8px; overflow:hidden; margin:15px 0; border:1px solid #333; }
+.vid iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
+.btn { display:inline-block; padding:10px 14px; margin:5px 6px 5px 0; background:#00b894; color:#fff; text-decoration:none; border-radius:6px; font-weight:bold; font-size:13px; }
+.btn-mal { background:#2e51a2; }
+.btn-cr { background:#f47521; }
+.btn-yt { background:#ff0000; }
+.credit { font-size:13px; color:#aaa; margin-top:15px; margin-bottom:5px; font-weight:bold; }
+.status-msg { text-align:center; padding:50px 20px; color:#888; grid-column:1 / -1; font-size:16px; }
+.synopsis { line-height:1.6; color:#ccc; font-size:14px; }
 </style>
 </head>
 <body>
+
 <header>
-    <h3 onclick="location.reload()" style="cursor:pointer;margin:0 10px 0 0">Kan9</h3>
+    <h3 onclick="location.reload()">Kan9</h3>
     <input id="q" placeholder="Search anime..." onkeypress="if(event.key==='Enter') search()">
     <button onclick="search()">Search</button>
-    <button onclick="loadSeasonal()">Seasonal</button>
-    <button onclick="showFavorites()">⭐ Favorites</button>
+    <button class="secondary" onclick="loadSeasonal()">Seasonal</button>
+    <button class="secondary" onclick="showFavorites()">⭐ Favorites</button>
 </header>
 
 <div id="d">
-    <button onclick="document.getElementById('d').style.display='none'; document.getElementById('grid').style.display='grid'">Back</button>
-    <h2 id
-        
+    <button class="secondary" onclick="closeDetails()">← Back to list</button>
+    <h2 id="t_txt" style="margin-top:15px; margin-bottom:5px;"></h2>
+    <div id="vid_wrapper" class="vid"><iframe id="tr" allowfullscreen></iframe></div>
+    <p id="s" class="synopsis"></p>
+    <div class="credit">Watch & Find Details on Official Platforms:</div>
+    <div id="l"></div>
+</div>
+
+<div id="grid"></div>
+
+<script>
+const ANILIST_URL = 'https://graphql.anilist.co';
+let favs = JSON.parse(localStorage.getItem('favs') || '[]');
+
+async function fetchAniList(query, variables = {}) {
+    const response = await fetch(ANILIST_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ query, variables })
+    });
+    if (!response.ok) throw new Error('Network response failed');
+    const json = await response.json();
+    return json.data;
+}
+
+async function loadTopAnime() {
+    const query = `
+    query {
+      Page(page: 1, perPage: 30) {
+        media(type: ANIME, sort: POPULARITY_DESC) {
+          id
+          idMal
+          title { english romaji }
+          coverImage { extraLarge large }
+          description(asHtml: false)
+          trailer { id site }
+        }
+      }
+    }`;
+    await executeFetch(query);
+}
+
+async function search() {
+    const qVal = document.getElementById('q').value.trim();
+    if (!qVal) return;
+    
+    const query = `
+    query ($search: String) {
+      Page(page: 1, perPage: 30) {
+        media(type: ANIME, search: $search) {
+          id
+          idMal
+          title { english romaji }
+          coverImage { extraLarge large }
+          description(asHtml: false)
+          trailer { id site }
+        }
+      }
+    }`;
+    await executeFetch(query, { search: qVal });
+}
+
+async function loadSeasonal() {
+    const query = `
+    query {
+      Page(page: 1, perPage: 30) {
+        media(type: ANIME, season: SUMMER, seasonYear: 2026, sort: POPULARITY_DESC) {
+          id
+          idMal
+          title { english romaji }
+          coverImage { extraLarge large }
+          description(asHtml: false)
+          trailer { id site }
+        }
+      }
+    }`;
+    await executeFetch(query);
+}
+
+async function executeFetch(query, variables = {}) {
+    const grid = document.getElementById('grid');
+    grid.style.display = 'grid';
+    document.getElementById('d').style.display = 'none';
+    grid.innerHTML = '<div class="status-msg">Loading anime list...</div>';
+
+    try {
+        const data = await fetchAniList(query, variables);
+        render(data.Page.media);
+    } catch (err) {
+        console.error(err);
+        grid.innerHTML = '<div class="status-msg" style="color:#ff4757;">Failed to load data. Please refresh or try again.</div>';
+    }
+}
+
+function render(list) {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    
+    if (!list || list.length === 0) {
+        grid.innerHTML = '<div class="status-msg">No anime found.</div>';
+        return;
+    }
+
+    list.forEach(a => {
+        const t = a.title.english || a.title.romaji;
+        const img = a.coverImage.extraLarge || a.coverImage.large;
+        const isFav = favs.some(f => f.id === a.id);
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <img src="${img}" alt="${t}" loading="lazy">
+            <div class="card-title">${t}</div>
+            <button class="fav-btn">${isFav ? '⭐' : '☆'}</button>
+        `;
+
+        const favBtn = card.querySelector('.fav-btn');
+        favBtn.onclick = (e) => toggleFav(e, a, favBtn);
+
+        card.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON') showDetails(a, t);
+        };
+
+        grid.appendChild(card);
+    });
+}
+
+function toggleFav(e, a, btn) {
+    e.stopPropagation();
+    const idx = favs.findIndex(f => f.id === a.id);
+    if (idx > -1) {
+        favs.splice(idx, 1);
+        btn.innerText = '☆';
+    } else {
+        favs.push(a);
+        btn.innerText = '⭐';
+    }
+    localStorage.setItem('favs', JSON.stringify(favs));
+}
+
+function showFavorites() {
+    document.getElementById('d').style.display = 'none';
+    document.getElementById('grid').style.display = 'grid';
+    render(favs);
+}
+
+function showDetails(a, t) {
+    document.getElementById('grid').style.display = 'none';
+    const d = document.getElementById('d');
+    d.style.display = 'block';
+
+    document.getElementById('t_txt').innerText = t;
+    
+    // Clean description text from HTML tags
+    let cleanSynopsis = a.description ? a.description.replace(/<[^>]*>?/gm, '') : 'No synopsis available.';
+    document.getElementById('s').innerText = cleanSynopsis;
+
+    // Trailer embed setup
+    const trIframe = document.getElementById('tr');
+    if (a.trailer && a.trailer.site === 'youtube') {
+        trIframe.src = `https://www.youtube.com/embed/${a.trailer.id}`;
+        document.getElementById('vid_wrapper').style.display = 'block';
+    } else {
+        trIframe.src = '';
+        document.getElementById('vid_wrapper').style.display = 'none';
+    }
+
+    // Direct provider and database watch links
+    const malUrl = a.idMal ? `https://myanimelist.net/anime/${a.idMal}` : `https://myanimelist.net/anime.php?q=${encodeURIComponent(t)}`;
+    const crUrl = `https://www.crunchyroll.com/search?q=${encodeURIComponent(t)}`;
+    const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(t + ' official anime')}`;
+    const aniListUrl = `https://anilist.co/anime/${a.id}`;
+
+    document.getElementById('l').innerHTML = `
+        <a class="btn btn-cr" target="_blank" href="${crUrl}">Search on Crunchyroll</a>
+        <a class="btn btn-yt" target="_blank" href="${ytUrl}">Search on YouTube</a>
+        <a class="btn btn-mal" target="_blank" href="${malUrl}">MyAnimeList Page</a>
+        <a class="btn" target="_blank" href="${aniListUrl}">AniList Page</a>
+    `;
+
+    window.scrollTo(0, 0);
+}
+
+function closeDetails() {
+    document.getElementById('d').style.display = 'none';
+    document.getElementById('grid').style.display = 'grid';
+}
+
+// Initial load
+loadTopAnime();
+</script>
+</body>
+</html>
