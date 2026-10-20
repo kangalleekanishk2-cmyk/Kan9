@@ -2,186 +2,114 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kan9</title>
+<title>Kan9 Anime Hub</title>
 <style>
 body{margin:0;background:#111;color:#fff;font:14px sans-serif}
 header{display:flex;padding:10px;background:#1b1b1b;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10}
-input{flex:1;padding:8px;border-radius:4px;border:none;background:#222;color:#fff}
+input{flex:1;padding:8px;border-radius:4px;border:none}
 button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;border-radius:4px}
-#grid{display:grid;grid-template:auto/repeat(auto-fill,minmax(160px,1fr));gap:15px;padding:15px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:15px;padding:15px}
 .card{background:#222;border-radius:8px;cursor:pointer;position:relative}
 .card img{width:100%;height:220px;object-fit:cover;border-radius:8px 8px 0 0}
 .fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);border:0;color:gold;padding:5px;cursor:pointer;border-radius:50%}
 #d{display:none;padding:20px;max-width:800px;margin:auto}
 .vid{position:relative;padding-bottom:56.25%;height:0;background:#000;border-radius:8px;overflow:hidden;margin:15px 0}
 .vid iframe{position:absolute;width:100%;height:100%;border:0}
-.btn{display:inline-block;padding:8px;margin:5px;background:#00b894;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold;cursor:pointer;border:none}
-.btn.active{background:#ff4757}
+.btn{display:inline-block;padding:8px;margin:5px;background:#00b894;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold}
 .credit{font-size:12px;color:#aaa;margin-top:10px;padding:5px}
-#episodes-container{margin-top:15px;max-height:200px;overflow-y:auto;background:#222;padding:10px;border-radius:8px}
 </style>
-
-<!-- ONESIGNAL NOTIFICATION ENGINE SETUP -->
-<script src="https://onesignal.com" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "YOUR_ONESIGNAL_APP_ID", // <-- Replace this with your actual OneSignal App ID
-      safari_web_id: "web.onesignal.auto.064be486-da22-487b-8212-32b0051174c6",
-      notifyButton: { enable: true }
-    });
-  });
-</script>
 </head>
 <body>
 <header>
     <h3 onclick="location.reload()" style="cursor:pointer;margin:0 10px 0 0">Kan9</h3>
-    <input id="q" placeholder="Search...">
+    <input id="q" placeholder="Search anime...">
     <button onclick="search()">Search</button>
     <button onclick="loadSeasonal()">Seasonal</button>
     <button onclick="showFavorites()">⭐ Favorites</button>
 </header>
 
 <div id="d">
-    <button onclick="closeDetails()">Back</button>
+    <button onclick="d.style.display='none'; document.getElementById('grid').style.display='grid'">Back</button>
     <h2 id="t_txt"></h2>
-    <div class="vid"><iframe id="tr" allowfullscreen src=""></iframe></div>
-    
-    <div style="font-weight:bold; margin-top:10px;">Select Episode:</div>
-    <div id="episodes-container">Searching for watchable episodes...</div>
-
+    <div class="vid"><iframe id="tr" allowfullscreen></iframe></div>
     <p id="s"></p>
-    <div class="credit">Alternative Platforms:</div>
+    <div class="credit">Watch on official platforms:</div>
     <div id="l"></div>
 </div>
 
-<div id="grid">Loading titles...</div>
+<div id="grid"></div>
 
 <script>
-let favs = [];
-try {
-    favs = JSON.parse(localStorage.getItem('favs') || '[]');
-} catch(e) { console.error(e); }
+let favs = JSON.parse(localStorage.getItem('favs') || '[]');
 
-function closeDetails() {
-    document.getElementById('d').style.display = 'none';
-    document.getElementById('tr').src = '';
-}
-
-async function anilistQuery(query, variables) {
+async function load(u){
     try {
-        let res = await fetch('https://anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ query: query, variables: variables })
-        });
-        let json = await res.json();
-        return json.data.Page.media;
-    } catch (e) {
-        console.error("AniList Fetch Error: ", e);
-        return [];
-    }
-}
-
-async function loadTrending() {
-    document.getElementById('grid').innerHTML = '<div style="padding:20px">Loading titles...</div>';
-    let query = `query ($perPage: Int) { Page (perPage: $perPage) { media (type: ANIME, sort: TRENDING_DESC) { id idMal title { english romaji } description coverImage { large } } } }`;
-    let data = await anilistQuery(query, { perPage: 30 });
-    render(data);
-}
-
-async function search() {
-    let qVal = document.getElementById('q').value;
-    if(!qVal) return;
-    document.getElementById('grid').innerHTML = '<div style="padding:20px">Searching...</div>';
-    let query = `query ($search: String) { Page (perPage: 30) { media (type: ANIME, search: $search) { id idMal title { english romaji } description coverImage { large } } } }`;
-    let data = await anilistQuery(query, { search: qVal });
-    render(data);
-}
-
-async function loadSeasonal() {
-    document.getElementById('grid').innerHTML = '<div style="padding:20px">Loading Seasonal...</div>';
-    let query = `query { Page (perPage: 30) { media (type: ANIME, season: SUMMER, seasonYear: 2026, sort: POPULARITY_DESC) { id idMal title { english romaji } description coverImage { large } } } }`;
-    let data = await anilistQuery(query, {});
-    render(data);
+        let res = await fetch(u);
+        let j = await res.json();
+        render(j.data);
+    } catch(e) { console.error("Load error:", e); }
 }
 
 function render(data){
-    const grid = document.getElementById('grid');
+    let grid = document.getElementById('grid');
     grid.innerHTML='';
     if(!data || data.length === 0) {
-        grid.innerHTML = '<div style="padding:20px">No results found.</div>';
+        grid.innerHTML = '<div style="padding:20px">No anime found.</div>';
         return;
     }
     data.forEach(a=>{
-        let t = a.title.english || a.title.romaji;
+        let t = a.title_english || a.title;
         let c = document.createElement('div');
         c.className = 'card';
-        c.innerHTML = `<img src="${a.coverImage.large}"><div style="padding:10px"><b>${t}</b></div><button class="fav-btn">⭐</button>`;
-        
-        c.querySelector('.fav-btn').onclick = (e) => {
-            e.stopPropagation();
-            toggleFav(a);
-        };
-        c.onclick = (e) => {
-            if(e.target.tagName !== 'BUTTON') show(a, t);
-        };
+        c.innerHTML = `<img src="${a.images.jpg.large_image_url}"><div style="padding:10px"><b>${t}</b></div><button class="fav-btn" onclick="toggleFav(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})">⭐</button>`;
+        c.onclick = (e) => { if(e.target.tagName !== 'BUTTON') show(a, t); };
         grid.appendChild(c);
     });
 }
 
-function toggleFav(a){
-    if(favs.find(f => f.id === a.id)) favs = favs.filter(f => f.id !== a.id);
+function toggleFav(e, a){
+    e.stopPropagation();
+    let id = a.mal_id;
+    if(favs.find(f => f.mal_id === id)) favs = favs.filter(f => f.mal_id !== id);
     else favs.push(a);
     localStorage.setItem('favs', JSON.stringify(favs));
     alert('Updated Favorites!');
 }
 
 function showFavorites(){ render(favs); }
+function search(){ load('https://api.jikan.moe/v4/anime?q=' + encodeURIComponent(document.getElementById('q').value)); }
+function loadSeasonal(){ load('https://api.jikan.moe/v4/seasons/now'); }
 
-async function show(a, t) {
-    const d = document.getElementById('d');
-    const t_txt = document.getElementById('t_txt');
-    const s = document.getElementById('s');
-    const tr = document.getElementById('tr');
-    const l = document.getElementById('l');
-    const epContainer = document.getElementById('episodes-container');
-
+function show(a, t){
+    document.getElementById('grid').style.display = 'none';
+    let d = document.getElementById('d');
     d.style.display = 'block';
-    t_txt.innerText = t;
-    s.innerHTML = a.description || 'No synopsis available.';
-    tr.src = ''; 
     
-    epContainer.innerHTML = "Opening video stream panels...";
-
+    document.getElementById('t_txt').innerText = t;
+    document.getElementById('s').innerText = a.synopsis || 'No synopsis available.';
+    
+    let trailerFrame = document.getElementById('tr');
+    trailerFrame.src = a.trailer?.embed_url || '';
+    
+    // Direct destination links to official providers and databases
     let platforms = [
-        ['Crunchyroll', 'https://crunchyroll.com'],
-        ['YouTube', 'https://youtube.com'],
-        ['Netflix', 'https://netflix.com']
+        ['Crunchyroll', 'https://www.crunchyroll.com/search?q='],
+        ['YouTube (Official Trailers/Clips)', 'https://www.youtube.com/results?search_query='],
+        ['Netflix', 'https://www.netflix.com/search?q='],
+        ['MyAnimeList', 'https://myanimelist.net/anime/' + a.mal_id]
     ];
     
-    // STRICT FIXED ARRAY LINK INDEX MAPPING (p[0] = Name, p[1] = Link URL)
-    l.innerHTML = platforms.map(p => {
-        return `<a class="btn" target="_blank" href="${p[1] + encodeURIComponent(t)}">${p[0]}</a>`;
+    let linkContainer = document.getElementById('l');
+    linkContainer.innerHTML = platforms.map(p => {
+        let url = p[1].startsWith('http') && p[1].includes('myanimelist.net') ? p[1] : p[1] + encodeURIComponent(t);
+        return `<a class="btn" target="_blank" href="${url}">${p[0]}</a>`;
     }).join('');
     
-    window.scrollTo(0, 0);
-
-    let trackingId = a.idMal || a.id;
-    tr.src = `https://vidsrc.me{trackingId}`;
-    
-    epContainer.innerHTML = '';
-    let infoText = document.createElement('div');
-    infoText.style.padding = '5px';
-    infoText.style.color = '#aaa';
-    infoText.innerText = "✨ Use the Player window menu inside the stream frame above to change episodes and video mirrors seamlessly.";
-    epContainer.appendChild(infoText);
+    window.scrollTo(0,0);
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    loadTrending();
-});
+// Load top anime on startup
+load('https://api.jikan.moe/v4/top/anime');
 </script>
 </body>
 </html>
