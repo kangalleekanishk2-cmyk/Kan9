@@ -9,107 +9,27 @@ header{display:flex;padding:10px;background:#1b1b1b;gap:10px;align-items:center;
 input{flex:1;padding:8px;border-radius:4px;border:none}
 button{padding:8px 12px;background:#ff4757;color:#fff;border:0;cursor:pointer;border-radius:4px}
 #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:15px;padding:15px}
-.card{background:#222;border-radius:8px;cursor:pointer;position:relative}
-.card img{width:100%;height:220px;object-fit:cover;border-radius:8px 8px 0 0}
-.fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);border:0;color:gold;padding:5px;cursor:pointer;border-radius:50%}
+.card{background:#222;border-radius:8px;cursor:pointer;position:relative;overflow:hidden}
+.card img{width:100%;height:220px;object-fit:cover;display:block}
+.fav-btn{position:absolute;top:5px;right:5px;background:rgba(0,0,0,0.6);border:0;color:gold;padding:5px;cursor:pointer;border-radius:50%;z-index:2}
 #d{display:none;padding:20px;max-width:800px;margin:auto}
 .vid{position:relative;padding-bottom:56.25%;height:0;background:#000;border-radius:8px;overflow:hidden;margin:15px 0}
 .vid iframe{position:absolute;width:100%;height:100%;border:0}
 .btn{display:inline-block;padding:8px;margin:5px;background:#00b894;color:#fff;text-decoration:none;border-radius:4px;font-weight:bold}
 .credit{font-size:12px;color:#aaa;margin-top:10px;padding:5px}
+.loading{padding:30px;text-align:center;color:#aaa;grid-column:1/-1;font-size:16px;}
 </style>
 </head>
 <body>
 <header>
     <h3 onclick="location.reload()" style="cursor:pointer;margin:0 10px 0 0">Kan9</h3>
-    <input id="q" placeholder="Search anime...">
+    <input id="q" placeholder="Search anime..." onkeypress="if(event.key==='Enter') search()">
     <button onclick="search()">Search</button>
     <button onclick="loadSeasonal()">Seasonal</button>
     <button onclick="showFavorites()">⭐ Favorites</button>
 </header>
 
 <div id="d">
-    <button onclick="d.style.display='none'; document.getElementById('grid').style.display='grid'">Back</button>
-    <h2 id="t_txt"></h2>
-    <div class="vid"><iframe id="tr" allowfullscreen></iframe></div>
-    <p id="s"></p>
-    <div class="credit">Watch on official platforms:</div>
-    <div id="l"></div>
-</div>
-
-<div id="grid"></div>
-
-<script>
-let favs = JSON.parse(localStorage.getItem('favs') || '[]');
-
-async function load(u){
-    try {
-        let res = await fetch(u);
-        let j = await res.json();
-        render(j.data);
-    } catch(e) { console.error("Load error:", e); }
-}
-
-function render(data){
-    let grid = document.getElementById('grid');
-    grid.innerHTML='';
-    if(!data || data.length === 0) {
-        grid.innerHTML = '<div style="padding:20px">No anime found.</div>';
-        return;
-    }
-    data.forEach(a=>{
-        let t = a.title_english || a.title;
-        let c = document.createElement('div');
-        c.className = 'card';
-        c.innerHTML = `<img src="${a.images.jpg.large_image_url}"><div style="padding:10px"><b>${t}</b></div><button class="fav-btn" onclick="toggleFav(event, ${JSON.stringify(a).replace(/"/g, '&quot;')})">⭐</button>`;
-        c.onclick = (e) => { if(e.target.tagName !== 'BUTTON') show(a, t); };
-        grid.appendChild(c);
-    });
-}
-
-function toggleFav(e, a){
-    e.stopPropagation();
-    let id = a.mal_id;
-    if(favs.find(f => f.mal_id === id)) favs = favs.filter(f => f.mal_id !== id);
-    else favs.push(a);
-    localStorage.setItem('favs', JSON.stringify(favs));
-    alert('Updated Favorites!');
-}
-
-function showFavorites(){ render(favs); }
-function search(){ load('https://api.jikan.moe/v4/anime?q=' + encodeURIComponent(document.getElementById('q').value)); }
-function loadSeasonal(){ load('https://api.jikan.moe/v4/seasons/now'); }
-
-function show(a, t){
-    document.getElementById('grid').style.display = 'none';
-    let d = document.getElementById('d');
-    d.style.display = 'block';
-    
-    document.getElementById('t_txt').innerText = t;
-    document.getElementById('s').innerText = a.synopsis || 'No synopsis available.';
-    
-    let trailerFrame = document.getElementById('tr');
-    trailerFrame.src = a.trailer?.embed_url || '';
-    
-    // Direct destination links to official providers and databases
-    let platforms = [
-        ['Crunchyroll', 'https://www.crunchyroll.com/search?q='],
-        ['YouTube (Official Trailers/Clips)', 'https://www.youtube.com/results?search_query='],
-        ['Netflix', 'https://www.netflix.com/search?q='],
-        ['MyAnimeList', 'https://myanimelist.net/anime/' + a.mal_id]
-    ];
-    
-    let linkContainer = document.getElementById('l');
-    linkContainer.innerHTML = platforms.map(p => {
-        let url = p[1].startsWith('http') && p[1].includes('myanimelist.net') ? p[1] : p[1] + encodeURIComponent(t);
-        return `<a class="btn" target="_blank" href="${url}">${p[0]}</a>`;
-    }).join('');
-    
-    window.scrollTo(0,0);
-}
-
-// Load top anime on startup
-load('https://api.jikan.moe/v4/top/anime');
-</script>
-</body>
-</html>
+    <button onclick="document.getElementById('d').style.display='none'; document.getElementById('grid').style.display='grid'">Back</button>
+    <h2 id
+        
